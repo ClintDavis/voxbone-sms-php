@@ -1,5 +1,5 @@
 {
-    "name": "clintdavis/voxboneSMS",
+    "name": "clintdavis/voxbonesms",
     "description": "A simple library send voxbone SMS's",
     "type": "library",
     "license": "BSD-3-Clause",
