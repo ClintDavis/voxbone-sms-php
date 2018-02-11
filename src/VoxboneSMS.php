@@ -45,6 +45,16 @@ class VoxboneSMS
 		$this->baseURL = $baseURL;
 	}
 
+	public static function countFragments($message) {
+
+		$this->messageFull = $message;
+
+		$this->detectEncodeing();
+		$this->detectFragmentation();
+
+		return $this->fragments;
+	}
+
 
 	public function message($to, $from, $message, $send = true) {
 		$this->to = $to;
