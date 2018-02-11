@@ -45,30 +45,16 @@ class VoxboneSMS
 		$this->baseURL = $baseURL;
 	}
 
-	public static function countFragments($message) {
-
-		$this->messageFull = $message;
-
-		$this->detectEncodeing();
-		$this->detectFragmentation();
-
-		return $this->fragments;
-	}
-
-
-	public function message($to, $from, $message, $send = true) {
+	public function SMS($to, $from, $message, $send = true) {
 		$this->to = $to;
 		$this->from = $from;
 
 		$this->to_raw = substr($this->to, 1);
 		$this->from_raw = substr($this->from, 1);
 
-		$this->messageFull = $message;
-
 		$this->generateFragRef();
-		$this->detectEncodeing();
-		$this->detectFragmentation();
-		$this->fragmentMessage();
+
+		$this->message($message);
 
 		if ($send) {
 			$this->send();
@@ -76,11 +62,19 @@ class VoxboneSMS
 	}
 
 
+	public function message($message) {
+		$this->messageFull = $message;
+
+		$this->detectFragmentation();
+		$this->fragmentMessage();
+
+	}
+
 	/*
 	*	Produce charactor set naming and string length calculations
 	 */
 
-	private function detectEncodeing() {
+	public function detectEncodeing() {
 
 		$this->mb_strlen = mb_strlen($this->messageFull);
 
@@ -106,7 +100,7 @@ class VoxboneSMS
 	*	Based on voxbone developer docs: https://developers.voxbone.com/how-to/fragment-sms/
 	 */
 
-	private function detectFragmentation() {
+	public function detectFragmentation() {
 
 		switch ($this->charset) {
 			case '7-Bit GSM':
@@ -168,49 +162,46 @@ class VoxboneSMS
 	*	Send SMS to voxbone
 	 */
 
-	public function send() {
+	public function send($deliveryReport = 'all') {
 
 
 		$client = new \GuzzleHttp\Client([
-				// Base URI is used with relative requests
-				'base_uri' => $this->baseURL,
-				// You can set any number of default request options.
-				'timeout'  => 20,
-				// Set default username and password for voxbone from the .env file
-				'auth' => [$this->username, $this->password, 'digest']
-				]);
+			// Base URI is used with relative requests
+			'base_uri' => $this->baseURL,
+			// You can set any number of default request options.
+			'timeout'  => 20,
+			// Set default username and password for voxbone from the .env file
+			'auth' => [$this->username, $this->password, 'digest']
+		]);
 
 
-
-		foreach ($this->messageFragments as $key => $msgFragment) {
-
-
-			print_r([
-				'json' => [
-					'from' 	=> $this->from,
-					'msg' 	=> $msgFragment,
-					'frag' 	=> [
-			      'frag_ref' 		=> $this->fragRef,
-			      'frag_total' 	=> $this->fragments,
-			      'frag_num' 		=> $key+1, // Prevent indexed by zero
-			      ]
-			]]);
+		$response = $client->request('POST', $this->to_raw, [
+			'json' => [
+				'from' 	=> $this->from,
+				'msg' 	=> $this->messageFull,
+				'frag' 	=> null,
+				'delivery_report' => $deliveryReport
+		]]);
 
 
+		/*
+		*	Seams that voxbones does not require the message to be fragmented.
+		* However we still want reporting on this for builling purposes.
+		*/
 
-			$response = $client->request('POST', $this->to_raw, [
-				'json' => [
-					'from' 	=> $this->from,
-					'msg' 	=> $msgFragment,
-					'frag' 	=> [
-			      'frag_ref' 		=> $this->fragRef,
-			      'frag_total' 	=> $this->fragments,
-			      'frag_num' 		=> $key+1, // Prevent indexed by zero
-					],
-					'delivery_report' => 'all'
-			]]);
-
-		}
+		// foreach ($this->messageFragments as $key => $msgFragment) {
+		// 	$response = $client->request('POST', $this->to_raw, [
+		// 		'json' => [
+		// 			'from' 	=> $this->from,
+		// 			'msg' 	=> $msgFragment,
+		// 			'frag' 	=> [
+		// 	      'frag_ref' 		=> $this->fragRef,
+		// 	      'frag_total' 	=> $this->fragments,
+		// 	      'frag_num' 		=> $key+1, // Prevent indexed by zero
+		// 			],
+		// 			'delivery_report' => 'all'
+		// 	]]);
+		// }
 
 
 	}
