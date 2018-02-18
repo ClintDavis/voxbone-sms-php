@@ -65,6 +65,7 @@ class VoxboneSMS
 	public function message($message) {
 		$this->messageFull = $message;
 
+		$this->detectEncodeing();
 		$this->detectFragmentation();
 		$this->fragmentMessage();
 
