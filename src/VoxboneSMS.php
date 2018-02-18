@@ -176,33 +176,37 @@ class VoxboneSMS
 		]);
 
 
-		$response = $client->request('POST', $this->to_raw, [
-			'json' => [
-				'from' 	=> $this->from,
-				'msg' 	=> $this->messageFull,
-				'delivery_report' => $deliveryReport
-			]
-		]);
+		/*
+		*	Seams that voxbones does require messages to be fragmented when above 2 fragments
+		*/
+
+		foreach ($this->messageFragments as $key => $msgFragment) {
+			$response = $client->request('POST', $this->to_raw, [
+				'json' => [
+					'from' 	=> $this->from,
+					'msg' 	=> $msgFragment,
+					'frag' 	=> [
+			      'frag_ref' 		=> $this->fragRef,
+			      'frag_total' 	=> $this->fragments,
+			      'frag_num' 		=> $key+1, // Prevent indexed by zero
+					],
+					'delivery_report' => 'all'
+			]]);
+		}
 
 
 		/*
-		*	Seams that voxbones does not require the message to be fragmented.
-		* However we still want reporting on this for builling purposes.
+		*	Single message format - not needed from the above fragmentation code
 		*/
 
-		// foreach ($this->messageFragments as $key => $msgFragment) {
-		// 	$response = $client->request('POST', $this->to_raw, [
-		// 		'json' => [
-		// 			'from' 	=> $this->from,
-		// 			'msg' 	=> $msgFragment,
-		// 			'frag' 	=> [
-		// 	      'frag_ref' 		=> $this->fragRef,
-		// 	      'frag_total' 	=> $this->fragments,
-		// 	      'frag_num' 		=> $key+1, // Prevent indexed by zero
-		// 			],
-		// 			'delivery_report' => 'all'
-		// 	]]);
-		// }
+		// $response = $client->request('POST', $this->to_raw, [
+		// 	'json' => [
+		// 		'from' 	=> $this->from,
+		// 		'msg' 	=> $this->messageFull,
+		// 		'frag'  => NULL,
+		// 		'delivery_report' => $deliveryReport
+		// 	]
+		// ]);
 
 
 	}
