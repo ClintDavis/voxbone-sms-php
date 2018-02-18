@@ -180,9 +180,9 @@ class VoxboneSMS
 			'json' => [
 				'from' 	=> $this->from,
 				'msg' 	=> $this->messageFull,
-				'frag' 	=> null,
 				'delivery_report' => $deliveryReport
-		]]);
+			]
+		]);
 
 
 		/*
